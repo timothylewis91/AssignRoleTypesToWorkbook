@@ -1,0 +1,320 @@
+  @Test
+        public void assignUsersToWorkbookSuccessForAdmin() throws Exception {
+            AssignUsersToWorkbookRequestObj request = new AssignUsersToWorkbookRequestObj();
+            request.setWorkbookId(1L);
+            request.setUserIds(Arrays.asList(1L, 2L, 3L));
+            request.setRoleType("COLLABORATOR");
+
+            SecurityContextUtil.getInstance()
+                    .setAuthentication("foobar", "Foo", "Bar", "ADMIN", Privilege.ASSIGN_WORKBOOK_PERMISSION);
+
+            List<AssignUsersToWorkbookObj> serviceResult = new ArrayList<>();
+            for (Long userId : request.getUserIds()) {
+                AssignUsersToWorkbookObj item = new AssignUsersToWorkbookObj();
+                item.setUserIds(Collections.singletonList(userId));
+                item.setWorkbookId(request.getWorkbookId());
+                item.setRoleType(request.getRoleType());
+                serviceResult.add(item);
+            }
+
+            Mockito.when(workbookService.assignUsersToWorkbook(any(AssignUsersToWorkbookObj.class)))
+                    .thenReturn(serviceResult);
+            Mockito.when(workbookService.getWorkbookRole(Mockito.anyLong(), Mockito.anyLong()))
+                    .thenReturn("COLLABORATOR");
+
+            ResponseEntity<WorkbookResponseObj> response = workbookController.assignUsersToWorkbook(request);
+            Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+        }
+
+        @Test
+        public void assignUsersToWorkbookFailure() throws Exception {
+            AssignUsersToWorkbookRequestObj request = new AssignUsersToWorkbookRequestObj();
+            request.setWorkbookId(1L);
+            request.setUserIds(Arrays.asList(1L, 2L, 3L));
+            request.setRoleType("OWNER");
+
+            SecurityContextUtil.getInstance()
+                    .setAuthentication("foobar", "Foo", "Bar", Privilege.ASSIGN_WORKBOOK_PERMISSION);
+
+            // Throw EntityNotFoundException instead of Exception
+            Mockito.when(workbookService.assignUsersToWorkbook(any(AssignUsersToWorkbookObj.class)))
+                    .thenThrow(EntityNotFoundException.class);
+            Mockito.when(workbookService.getWorkbookRole(Mockito.anyLong(), Mockito.anyLong()))
+                    .thenReturn("OWNER");
+
+            ResponseEntity<WorkbookResponseObj> response = workbookController.assignUsersToWorkbook(request);
+            Assertions.assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        }
+
+        @Test
+        public void assignUsersToWorkbookFailureIfNotFound() throws Exception {
+
+            AssignUsersToWorkbookRequestObj request = new AssignUsersToWorkbookRequestObj();
+            request.setWorkbookId(1L);
+            request.setUserIds(Arrays.asList(1L, 2L, 3L));
+            request.setRoleType("OWNER");
+
+            SecurityContextUtil.getInstance()
+                    .setAuthentication("foobar", "Foo", "Bar", Privilege.ASSIGN_WORKBOOK_PERMISSION);
+
+            Mockito.when(workbookService.getWorkbookRole(Mockito.anyLong(), Mockito.anyLong()))
+                    .thenReturn("OWNER");
+
+            ResponseEntity<WorkbookResponseObj> response = workbookController.assignUsersToWorkbook(request);
+            Assertions.assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+
+            request.setUserIds(Arrays.asList());
+            response = workbookController.assignUsersToWorkbook(request);
+            Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+        }
+
+        @Test
+        public void assignUsersToWorkbookFailureForCollaborator() throws Exception {
+            AssignUsersToWorkbookRequestObj request = new AssignUsersToWorkbookRequestObj();
+            request.setWorkbookId(1L);
+            request.setUserIds(Arrays.asList(1L, 2L, 3L));
+            request.setRoleType("OWNER");
+
+            SecurityContextUtil.getInstance()
+                    .setAuthentication("foobar", "Foo", "Bar", Privilege.ASSIGN_WORKBOOK_PERMISSION);
+
+            // Throw EntityNotFoundException instead of Exception
+            Mockito.when(workbookService.assignUsersToWorkbook(any(AssignUsersToWorkbookObj.class)))
+                    .thenThrow(EntityNotFoundException.class);
+            Mockito.when(workbookService.getWorkbookRole(Mockito.anyLong(), Mockito.anyLong()))
+                    .thenReturn("COLLABORATOR");
+
+            ResponseEntity<WorkbookResponseObj> response = workbookController.assignUsersToWorkbook(request);
+            Assertions.assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        }
+
+        @Test
+        public void assignUsersToWorkbookEmptyResult() throws Exception {
+            AssignUsersToWorkbookRequestObj request = new AssignUsersToWorkbookRequestObj();
+            request.setWorkbookId(1L);
+            request.setUserIds(Arrays.asList(1L, 2L, 3L));
+            request.setRoleType("OWNER");
+
+            SecurityContextUtil.getInstance()
+                    .setAuthentication("foobar", "Foo", "Bar", Privilege.ASSIGN_WORKBOOK_PERMISSION);
+
+            Mockito.when(workbookService.assignUsersToWorkbook(any(AssignUsersToWorkbookObj.class)))
+                    .thenReturn(Collections.emptyList());
+            Mockito.when(workbookService.getWorkbookRole(Mockito.anyLong(), Mockito.anyLong()))
+                    .thenReturn("OWNER");
+
+            ResponseEntity<WorkbookResponseObj> response = workbookController.assignUsersToWorkbook(request);
+            Assertions.assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        }
+
+        @Test
+        public void assignUsersToWorkbookSuccessful() throws Exception {
+            AssignUsersToWorkbookRequestObj request = new AssignUsersToWorkbookRequestObj();
+            request.setWorkbookId(1L);
+            request.setUserIds(Arrays.asList(1L, 2L, 3L));
+            request.setRoleType("OWNER");
+
+            SecurityContextUtil.getInstance()
+                    .setAuthentication("foobar", "Foo", "Bar", Privilege.ASSIGN_WORKBOOK_PERMISSION);
+
+            AssignUsersToWorkbookObj workbookObj1 = new AssignUsersToWorkbookObj();
+            workbookObj1.setWorkbookId(1L);
+            workbookObj1.setUserIds(Arrays.asList(1L));
+            workbookObj1.setRoleType("OWNER");
+
+            AssignUsersToWorkbookObj workbookObj2 = new AssignUsersToWorkbookObj();
+            workbookObj2.setWorkbookId(1L);
+            workbookObj2.setUserIds(Arrays.asList(2L));
+            workbookObj2.setRoleType("OWNER");
+
+            AssignUsersToWorkbookObj workbookObj3 = new AssignUsersToWorkbookObj();
+            workbookObj3.setWorkbookId(1L);
+            workbookObj3.setUserIds(Arrays.asList(3L));
+            workbookObj3.setRoleType("OWNER");
+
+            List<AssignUsersToWorkbookObj> serviceResult = Arrays.asList(workbookObj1, workbookObj2, workbookObj3);
+
+            Mockito.when(workbookService.assignUsersToWorkbook(any(AssignUsersToWorkbookObj.class)))
+                    .thenReturn(serviceResult);
+            Mockito.when(workbookService.getWorkbookRole(Mockito.anyLong(), Mockito.anyLong()))
+                    .thenReturn("OWNER");
+
+            ResponseEntity<WorkbookResponseObj> response = workbookController.assignUsersToWorkbook(request);
+            Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+        }
+
+        @Test
+        public void assignUsersToWorkbookFailed() throws Exception {
+            AssignUsersToWorkbookRequestObj request = new AssignUsersToWorkbookRequestObj();
+            request.setWorkbookId(1L);
+            request.setUserIds(Arrays.asList(1L, 2L, 3L));
+            request.setRoleType("OWNER");
+
+            SecurityContextUtil.getInstance()
+                    .setAuthentication("foobar", "Foo", "Bar", Privilege.ASSIGN_WORKBOOK_PERMISSION);
+
+            Mockito.when(workbookService.assignUsersToWorkbook(any(AssignUsersToWorkbookObj.class)))
+                    .thenReturn(new ArrayList<>());
+            Mockito.when(workbookService.getWorkbookRole(Mockito.anyLong(), Mockito.anyLong()))
+                    .thenReturn("OWNER");
+
+            ResponseEntity<WorkbookResponseObj> response = workbookController.assignUsersToWorkbook(request);
+            Assertions.assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        }
+
+        @Test
+        public void assignUsersToWorkbookCollaboratorRole() throws Exception {
+            AssignUsersToWorkbookRequestObj request = new AssignUsersToWorkbookRequestObj();
+            request.setWorkbookId(1L);
+            request.setUserIds(Arrays.asList(1L, 2L, 3L));
+            request.setRoleType("COLLABORATOR");
+
+            SecurityContextUtil.getInstance()
+                    .setAuthentication("foobar", "Foo", "Bar", Privilege.ASSIGN_WORKBOOK_PERMISSION);
+
+            List<AssignUsersToWorkbookObj> serviceResult = new ArrayList<>();
+            for (Long userId : request.getUserIds()) {
+                AssignUsersToWorkbookObj item = new AssignUsersToWorkbookObj();
+                item.setUserIds(Collections.singletonList(userId));
+                item.setWorkbookId(request.getWorkbookId());
+                item.setRoleType(request.getRoleType());
+                serviceResult.add(item);
+            }
+
+            Mockito.when(workbookService.assignUsersToWorkbook(any(AssignUsersToWorkbookObj.class)))
+                    .thenReturn(serviceResult);
+         
+            Mockito.when(workbookService.getWorkbookRole(Mockito.anyLong(), Mockito.anyLong()))
+                    .thenReturn("OWNER");
+
+            ResponseEntity<WorkbookResponseObj> response = workbookController.assignUsersToWorkbook(request);
+            Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+        }
+
+        @Test
+        public void assignUsersToWorkbookBothRoles() throws Exception {
+            AssignUsersToWorkbookRequestObj request = new AssignUsersToWorkbookRequestObj();
+            request.setWorkbookId(1L);
+            request.setUserIds(Arrays.asList(1L, 2L, 3L));
+            request.setRoleType("BOTH");
+
+            SecurityContextUtil.getInstance()
+                    .setAuthentication("foobar", "Foo", "Bar", Privilege.ASSIGN_WORKBOOK_PERMISSION);
+
+            List<AssignUsersToWorkbookObj> serviceResult = new ArrayList<>();
+            for (Long userId : request.getUserIds()) {
+                AssignUsersToWorkbookObj item = new AssignUsersToWorkbookObj();
+                item.setUserIds(Collections.singletonList(userId));
+                item.setWorkbookId(request.getWorkbookId());
+                item.setRoleType(request.getRoleType());
+                serviceResult.add(item);
+            }
+
+            Mockito.when(workbookService.assignUsersToWorkbook(any(AssignUsersToWorkbookObj.class)))
+                    .thenReturn(serviceResult);
+            Mockito.when(workbookService.getWorkbookRole(Mockito.anyLong(), Mockito.anyLong()))
+                    .thenReturn("OWNER");
+
+            ResponseEntity<WorkbookResponseObj> response = workbookController.assignUsersToWorkbook(request);
+            Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+        }
+        // endregion
+
+        // region openWorkbookTest
+
+        @Test
+        public void openWorkbookShouldFailForUserWithoutPrivileges() {
+            SecurityContextUtil.getInstance().setAuthentication("foobar", "Foo", "Bar");
+            Assertions.assertThrows(AccessDeniedException.class, () -> workbookController.getWorkbooksByUser(1L));
+        }
+
+        @Test
+        public void openWorkbookShouldReturnNOTFOUND() {
+            SecurityContextUtil.getInstance().setAuthentication("foobar",
+                    "Foo",
+                    "Bar",
+                    Privilege.RETRIEVE_WORKBOOK_DATA);
+            ResponseEntity<OpenWorkbookResponseObj> response = workbookController.openWorkbook(1L);
+            Assertions.assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        }
+
+    @Test
+    public void openWorkbookShouldReturnOK() {
+        SecurityContextUtil.getInstance().setAuthentication("foobar",
+                "Foo",
+                "Bar",
+                Privilege.RETRIEVE_WORKBOOK_DATA);
+
+        OpenWorkbookResponseObj mockResponse = new OpenWorkbookResponseObj();
+        mockResponse.setRoleType("COLLABORATOR");
+        mockResponse.setLock(1L);
+
+        Mockito.when(workbookService.getWorkbook(1L)).thenReturn(Optional.of(new GetWorkbookResponseObj()));
+
+        Mockito.when(workbookService.getOpenWorkbook(1L,1L)).thenReturn(mockResponse);
+
+        ResponseEntity<OpenWorkbookResponseObj> response = workbookController.openWorkbook(1L);
+        Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assertions.assertNotNull(response.getBody());
+        Assertions.assertEquals("COLLABORATOR",response.getBody().getRoleType());
+    }
+
+    @Test
+    public void openWorkbookShouldReturnOKForOwner() {
+        SecurityContextUtil.getInstance().setAuthentication("foobar",
+                "Foo",
+                "Bar",
+                Privilege.RETRIEVE_WORKBOOK_DATA);
+
+        OpenWorkbookResponseObj mockResponse = new OpenWorkbookResponseObj();
+        mockResponse.setRoleType("OWNER");
+        mockResponse.setLock(1L);
+
+        Mockito.when(workbookService.getWorkbook(1L)).thenReturn(Optional.of(new GetWorkbookResponseObj()));
+
+        Mockito.when(workbookService.getOpenWorkbook(1L,1L)).thenReturn(mockResponse);
+
+        ResponseEntity<OpenWorkbookResponseObj> response = workbookController.openWorkbook(1L);
+        Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assertions.assertNotNull(response.getBody());
+        Assertions.assertEquals("OWNER",response.getBody().getRoleType());
+    }
+
+    @Test
+    public void openWorkbookShouldReturnOKForOwnerNoLock() {
+        SecurityContextUtil.getInstance().setAuthentication("foobar",
+                "Foo",
+                "Bar",
+                Privilege.RETRIEVE_WORKBOOK_DATA);
+
+        OpenWorkbookResponseObj mockResponse = new OpenWorkbookResponseObj();
+        mockResponse.setRoleType("COLLABORATOR");
+        mockResponse.setLock(2L);
+
+        Mockito.when(workbookService.getWorkbook(1L)).thenReturn(Optional.of(new GetWorkbookResponseObj()));
+
+        Mockito.when(workbookService.getOpenWorkbook(1L,1L)).thenReturn(mockResponse);
+
+        ResponseEntity<OpenWorkbookResponseObj> response = workbookController.openWorkbook(1L);
+        Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assertions.assertNotNull(response.getBody());
+        Assertions.assertEquals("COLLABORATOR",response.getBody().getRoleType());
+    }
+
+    @Test
+    public void openWorkbookShouldReturnUnauthorizedWhenNotOwnerOrCollaborator() {
+        SecurityContextUtil.getInstance().setAuthentication("foobar",
+                "Foo",
+                "Bar",
+                Privilege.RETRIEVE_WORKBOOK_DATA);
+
+        OpenWorkbookResponseObj mockResponse = new OpenWorkbookResponseObj();
+        mockResponse.setRoleType("ROLE");
+
+        Mockito.when(workbookService.getWorkbook(1L)).thenReturn(Optional.of(new GetWorkbookResponseObj()));
+
+        Mockito.when(workbookService.getOpenWorkbook(1L,1L)).thenReturn(mockResponse);
+
+        ResponseEntity<OpenWorkbookResponseObj> response = workbookController.openWorkbook(1L);
+        Assertions.assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
