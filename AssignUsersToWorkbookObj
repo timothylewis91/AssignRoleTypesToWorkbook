@@ -1,0 +1,12 @@
+package com.bah.residency.expedition.workbook.models;
+
+import java.util.List;
+
+import lombok.Data;
+
+@Data
+public class AssignUsersToWorkbookObj {
+    private List<Long> userIds;
+    private Long workbookId;
+    private String roleType;
+}
