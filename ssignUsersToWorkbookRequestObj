@@ -1,0 +1,26 @@
+package com.bah.residency.expedition.workbook.models;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import java.util.List;
+
+@Data
+public class AssignUsersToWorkbookRequestObj {
+
+    @Schema(description = "The list of user Id numbers assigned to workbook")
+    private List<Long> userIds;
+
+    @Schema(description = "The index of the workbook that users are being assigned to")
+    private Long workbookId;
+
+    @Schema(description = "The role type of the users being assigned to the workbook")
+    private String roleType;
+
+    public AssignUsersToWorkbookObj toCommand() {
+        AssignUsersToWorkbookObj command = new AssignUsersToWorkbookObj();
+        command.setUserIds(this.userIds);
+        command.setWorkbookId(this.workbookId);
+        command.setRoleType(this.roleType);
+        return command;
+    }
+}
